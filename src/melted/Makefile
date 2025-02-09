@@ -34,6 +34,7 @@ CFLAGS += -I.. $(RDYNAMIC) -DVERSION=\"$(version)\"
 
 LDFLAGS += -L../mvcp -lmvcp
 LDFLAGS += -lpthread
+LDFLAGS += -lmlt-7
 
 SRCS := $(OBJS:.o=.c)
 

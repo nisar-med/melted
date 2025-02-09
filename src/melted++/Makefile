@@ -1,5 +1,4 @@
 include ../../config.mak
-include config.mak
 INSTALL = install
 
 ifneq ($(targetos), Darwin)

@@ -1,6 +1,5 @@
 SUBDIRS = src/mvcp \
 		  src/melted \
-		  src/melted++ \
 		  src/mvcp-client \
 		  src/mvcp-console \
 		  src/modules
