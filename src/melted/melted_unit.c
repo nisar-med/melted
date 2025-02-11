@@ -108,8 +108,7 @@ typedef struct
 		priv->position = mlt_frame_get_position(frame);
 		
 		osc_client osc = osc_client_init();
-		osc_client_send(osc, "/ping", "fsi", 1.0f, "hello", 2);
-		// melted_log(LOG_NOTICE, "on_consumer_frame_show: %d\n", priv->position);
+		osc_client_send_progress(osc, priv->position);
 		pthread_mutex_unlock(&priv->position_mutex);
 	}
 }

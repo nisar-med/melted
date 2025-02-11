@@ -4,8 +4,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdarg.h>
+#include <tinyosc/tinyosc.h>
 #include "melted_log.h"
-#include "tinyosc.h"
 
 static osc_client _client;
 osc_client osc_client_init()
@@ -48,21 +48,16 @@ osc_client osc_client_init()
     return _client;
 }
 
-void osc_client_send( osc_client client, char *address, char *format, ... )
+void osc_client_send_progress( osc_client client, int position )
 {
     // declare a buffer for writing the OSC packet into
     int len = 1024;
     char buffer[len];
-    
-    va_list ap;
-    va_start(ap, format);
-    const uint32_t i = tosc_vwrite(buffer, len, address, format, ap);
-    va_end(ap);
-
-    send(client->socket, buffer, len, 0);
-
-    return i; // return the total number of bytes written
-    // send the data out of the socket
+    len = tosc_writeMessage(buffer, len, "/ping", "fsi" , 1.0f, "position", position);
+    len = send(client->socket, buffer, len, 0);
+    if(len < 0) {
+        melted_log(LOG_ERR, "Failed to send OSC packet");
+    }
 }
 
 void osc_client_close(osc_client client)

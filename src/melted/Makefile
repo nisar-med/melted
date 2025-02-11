@@ -22,7 +22,8 @@ LIB_OBJS = melted_log.o \
 	   melted_local.o \
 	   melted_unit.o \
 	   melted_commands.o \
-	   melted_unit_commands.o
+	   melted_unit_commands.o \
+	   osc_client.o
 
 INCS = melted_server.h \
 	   melted_local.h \
@@ -34,7 +35,7 @@ CFLAGS += -I.. $(RDYNAMIC) -DVERSION=\"$(version)\"
 
 LDFLAGS += -L../mvcp -lmvcp
 LDFLAGS += -lpthread
-LDFLAGS += -lmlt-7
+LDFLAGS += -L../tinyosc -ltinyosc
 
 SRCS := $(OBJS:.o=.c)
 

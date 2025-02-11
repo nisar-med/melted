@@ -44,8 +44,8 @@ Installation
 
 	The install is triggered by running:
 	
-	    make install 
-	
+	    sudo make install 
+		use sudo so that ldconfig runs without any issues
 
 More Information
 ----------------
