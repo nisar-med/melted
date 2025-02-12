@@ -25,6 +25,7 @@
 
 #include <framework/mlt_properties.h>
 #include <mvcp/mvcp.h>
+#include "osc_client.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -34,6 +35,7 @@ extern "C"
 typedef struct
 {
 	mlt_properties properties;
+	osc_client osc;
 } 
 melted_unit_t, *melted_unit;
 

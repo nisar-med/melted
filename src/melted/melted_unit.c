@@ -41,51 +41,15 @@
 #include "melted_unit.h"
 #include "melted_log.h"
 #include "melted_local.h"
-#include "osc_client.h"
 
 #include <framework/mlt.h>
 
 /* Forward references */
 static void melted_unit_status_communicate( melted_unit );
 
-static void on_consumer_frame_show(mlt_properties owner, mlt_consumer self, mlt_event_data);
+static void on_consumer_frame_render(mlt_properties owner, melted_unit self, mlt_event_data);
 
 /** \brief private members of mlt_consumer */
-
-typedef struct
-{
-    int real_time;
-    atomic_int ahead;
-    int preroll;
-    mlt_image_format image_format;
-    mlt_audio_format audio_format;
-    mlt_deque queue;
-    void *ahead_thread;
-    pthread_mutex_t queue_mutex;
-    pthread_cond_t queue_cond;
-    pthread_mutex_t put_mutex;
-    pthread_cond_t put_cond;
-    mlt_frame put;
-    int put_active;
-    mlt_event event_listener;
-    mlt_position position;
-    pthread_mutex_t position_mutex;
-    int is_purge;
-    int aud_counter;
-    double fps;
-    int channels;
-    int frequency;
-    atomic_int speed;
-    /* additional fields added for the parallel work queue */
-    mlt_deque worker_threads;
-    pthread_mutex_t done_mutex;
-    pthread_cond_t done_cond;
-    int consecutive_dropped;
-    int consecutive_rendered;
-    int process_head;
-    atomic_int started;
-    pthread_t *threads; /**< used to deallocate all threads */
-} consumer_private;
 
 /** A listener on the consumer-frame-show event
  *
@@ -97,19 +61,15 @@ typedef struct
  * \param frame the frame that was shown
  */
 
- static void on_consumer_frame_show(mlt_properties owner,
-	mlt_consumer consumer,
+ static void on_consumer_frame_render(mlt_properties owner,
+	melted_unit unit,
 	mlt_event_data event_data)
 {
 	mlt_frame frame = mlt_event_data_to_frame(event_data);
 	if (frame) {
-		consumer_private *priv = consumer->local;
-		pthread_mutex_lock(&priv->position_mutex);
-		priv->position = mlt_frame_get_position(frame);
-		
-		osc_client osc = osc_client_init();
-		osc_client_send_progress(osc, priv->position);
-		pthread_mutex_unlock(&priv->position_mutex);
+		int position = mlt_frame_get_position(frame);
+		osc_client osc = unit->osc;
+		osc_client_send_progress(osc, position);
 	}
 }
 
@@ -136,6 +96,7 @@ melted_unit melted_unit_init( int index, char *constructor )
 	if ( consumer != NULL )
 	{
 		mlt_playlist playlist = mlt_playlist_init( );
+		mlt_service_set_profile( MLT_PLAYLIST_SERVICE( playlist ), profile );
 		this = calloc( sizeof( melted_unit_t ), 1 );
 		this->properties = mlt_properties_new( );
 		mlt_properties_init( this->properties, this );
@@ -148,12 +109,11 @@ melted_unit melted_unit_init( int index, char *constructor )
 		mlt_properties_set_data( this->properties, "consumer", consumer, 0, ( mlt_destructor )mlt_consumer_close, NULL );
 		mlt_properties_set_data( this->properties, "playlist", playlist, 0, ( mlt_destructor )mlt_playlist_close, NULL );
 		mlt_consumer_connect( consumer, MLT_PLAYLIST_SERVICE( playlist ) );
-
-		mlt_events_register( MLT_CONSUMER_PROPERTIES(consumer), "consumer-frame-show");
+		this->osc = osc_client_init();
 		mlt_events_listen(MLT_CONSUMER_PROPERTIES(consumer),
-			consumer,
-			"consumer-frame-show",
-			(mlt_listener) on_consumer_frame_show);
+			this,
+			"consumer-frame-render",
+			(mlt_listener) on_consumer_frame_render);
 
 	}
 
@@ -873,6 +833,7 @@ void melted_unit_close( melted_unit unit )
 		melted_log( LOG_DEBUG, "closing unit..." );
 		melted_unit_terminate( unit );
 		mlt_properties_close( unit->properties );
+		osc_client_close( unit->osc );
 		free( unit );
 		melted_log( LOG_DEBUG, "... unit closed." );
 	}

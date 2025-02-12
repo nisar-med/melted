@@ -140,7 +140,7 @@ int main( int argc, char **argv )
 	}
 	else
 	{
-		melted_log_init( log_syslog, LOG_NOTICE );
+		melted_log_init( log_stderr, LOG_NOTICE );
 	}
 
 	atexit( main_cleanup );

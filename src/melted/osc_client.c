@@ -7,45 +7,38 @@
 #include <tinyosc/tinyosc.h>
 #include "melted_log.h"
 
-static osc_client _client;
 osc_client osc_client_init()
 {
-    if  (_client != NULL)
-    {
-        return _client;
-    }
+    osc_client client;
 
-    _client = malloc( sizeof( osc_client_t ) );
-    if ( _client != NULL )
+    client = malloc( sizeof( osc_client_t ) );
+    if ( client != NULL )
     {
-        memset( _client, 0, sizeof( osc_client_t ) );
+        memset( client, 0, sizeof( osc_client_t ) );
         
-        struct sockaddr_in addr;
-        _client->socket = socket(AF_INET, SOCK_DGRAM, 0);
-        if (_client->socket < 0) {
+        client->socket = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0);
+        if (client->socket < 0) {
             melted_log(LOG_ERR, "Failed to create OSC socket");
-            free(_client);
-            _client = NULL;
+            free(client);
+            client = NULL;
             return NULL;
         }
 
         // Setup address structure
+        struct sockaddr_in addr;
         memset(&addr, 0, sizeof(addr));
         addr.sin_family = AF_INET;
         addr.sin_addr.s_addr = inet_addr(DEFAULT_IP);
         addr.sin_port = htons(DEFAULT_UDP_PORT);
 
-        // Connect socket (makes send() easier to use)
-        if (connect(_client->socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-            melted_log(LOG_ERR, "Failed to connect OSC socket");
-            close(_client->socket);
-            free(_client);
-            _client = NULL;
-            return NULL;
-        }
-
+        // Set socket options to non-blocking and ignore ICMP errors
+        int broadcast = 1;
+        setsockopt(client->socket, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast));
+        
+        // Store address for later use
+        memcpy(&client->addr, &addr, sizeof(addr));
     }
-    return _client;
+    return client;
 }
 
 void osc_client_send_progress( osc_client client, int position )
@@ -54,19 +47,13 @@ void osc_client_send_progress( osc_client client, int position )
     int len = 1024;
     char buffer[len];
     len = tosc_writeMessage(buffer, len, "/ping", "fsi" , 1.0f, "position", position);
-    len = send(client->socket, buffer, len, 0);
-    if(len < 0) {
-        melted_log(LOG_ERR, "Failed to send OSC packet");
-    }
+    if (len <= 0) return;
+    sendto(client->socket, buffer, len, 0, 
+        (struct sockaddr*)&client->addr, sizeof(struct sockaddr_in));
 }
 
 void osc_client_close(osc_client client)
 {
-    if (client && client == _client) {
-        if (_client->socket > 0) {
-            close(_client->socket);
-        }
-        free(_client);
-        _client = NULL;
-    }
+    close(client->socket);
+    free(client);
 }
