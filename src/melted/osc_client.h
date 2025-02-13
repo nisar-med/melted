@@ -14,5 +14,5 @@ typedef struct
 *osc_client, osc_client_t;
 
 extern osc_client osc_client_init();
-extern void osc_client_send_progress( osc_client client, int position );
+extern void osc_client_send_progress( osc_client client, int unit_id, int position );
 #endif

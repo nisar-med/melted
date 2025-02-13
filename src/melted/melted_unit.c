@@ -68,8 +68,10 @@ static void on_consumer_frame_render(mlt_properties owner, melted_unit self, mlt
 	mlt_frame frame = mlt_event_data_to_frame(event_data);
 	if (frame) {
 		int position = mlt_frame_get_position(frame);
+		int index = mlt_properties_get_int( unit->properties, "unit" );
+
 		osc_client osc = unit->osc;
-		osc_client_send_progress(osc, position);
+		osc_client_send_progress(osc, index, position);
 	}
 }
 
@@ -114,7 +116,6 @@ melted_unit melted_unit_init( int index, char *constructor )
 			this,
 			"consumer-frame-render",
 			(mlt_listener) on_consumer_frame_render);
-
 	}
 
 	return this;

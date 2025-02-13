@@ -41,12 +41,12 @@ osc_client osc_client_init()
     return client;
 }
 
-void osc_client_send_progress( osc_client client, int position )
+void osc_client_send_progress( osc_client client, int unit_id, int position )
 {
     // declare a buffer for writing the OSC packet into
     int len = 1024;
     char buffer[len];
-    len = tosc_writeMessage(buffer, len, "/ping", "fsi" , 1.0f, "position", position);
+    len = tosc_writeMessage(buffer, len, "/melted/progress", "ii" , unit_id, position);
     if (len <= 0) return;
     sendto(client->socket, buffer, len, 0, 
         (struct sockaddr*)&client->addr, sizeof(struct sockaddr_in));
