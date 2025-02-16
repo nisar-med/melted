@@ -114,7 +114,7 @@ melted_unit melted_unit_init( int index, char *constructor )
 		this->osc = osc_client_init();
 		mlt_events_listen(MLT_CONSUMER_PROPERTIES(consumer),
 			this,
-			"consumer-frame-render",
+			"consumer-frame-show",
 			(mlt_listener) on_consumer_frame_render);
 	}
 
