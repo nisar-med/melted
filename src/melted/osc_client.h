@@ -9,10 +9,10 @@
 typedef struct
 {
     int socket;
-    struct sockaddr_in addr;
 }
 *osc_client, osc_client_t;
 
 extern osc_client osc_client_init();
-extern void osc_client_send_progress( osc_client client, int unit_id, int position );
+extern void osc_client_send_progress( osc_client client, int unit_id, int position, const char *ip, int port );
+extern void osc_client_close( osc_client client );
 #endif

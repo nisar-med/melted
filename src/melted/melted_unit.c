@@ -71,7 +71,11 @@ static void on_consumer_frame_render(mlt_properties owner, melted_unit self, mlt
 		int index = mlt_properties_get_int( unit->properties, "unit" );
 
 		osc_client osc = unit->osc;
-		osc_client_send_progress(osc, index, position);
+		const char *ip = mlt_properties_get( unit->properties, "osc_ip" );
+		int port = mlt_properties_get_int( unit->properties, "osc_port" );
+		if ( !ip ) ip = DEFAULT_IP;
+		if ( !port ) port = DEFAULT_UDP_PORT;
+		osc_client_send_progress(osc, index, position, ip, port);
 	}
 }
 
@@ -112,6 +116,8 @@ melted_unit melted_unit_init( int index, char *constructor )
 		mlt_properties_set_data( this->properties, "playlist", playlist, 0, ( mlt_destructor )mlt_playlist_close, NULL );
 		mlt_consumer_connect( consumer, MLT_PLAYLIST_SERVICE( playlist ) );
 		this->osc = osc_client_init();
+		mlt_properties_set( this->properties, "osc_ip", DEFAULT_IP );
+		mlt_properties_set_int( this->properties, "osc_port", DEFAULT_UDP_PORT );
 		mlt_events_listen(MLT_CONSUMER_PROPERTIES(consumer),
 			this,
 			"consumer-frame-show",
@@ -791,6 +797,17 @@ int melted_unit_set( melted_unit unit, char *name_value )
 {
 	mlt_properties properties = NULL;
 
+	if ( strncmp( name_value, "osc_ip=", 7 ) == 0 )
+	{
+		mlt_properties_set( unit->properties, "osc_ip", name_value + 7 );
+		return 0;
+	}
+	else if ( strncmp( name_value, "osc_port=", 9 ) == 0 )
+	{
+		mlt_properties_set_int( unit->properties, "osc_port", atoi( name_value + 9 ) );
+		return 0;
+	}
+
 	if ( strncmp( name_value, "consumer.", 9 ) )
 	{
 		if ( strncmp( name_value, "producer.", 9 ) )
@@ -816,6 +833,8 @@ int melted_unit_set( melted_unit unit, char *name_value )
 
 char *melted_unit_get( melted_unit unit, char *name )
 {
+	if ( strcmp( name, "osc_ip" ) == 0 || strcmp( name, "osc_port" ) == 0 )
+		return mlt_properties_get( unit->properties, name );
 	mlt_playlist playlist = mlt_properties_get_data( unit->properties, "playlist", NULL );
 	mlt_properties properties = MLT_PLAYLIST_PROPERTIES( playlist );
 	return mlt_properties_get( properties, name );

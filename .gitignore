@@ -58,5 +58,16 @@ dkms.conf
 
 *.pc
 *.dat
+
+# Build artifacts and binaries
+/src/melted/melted
+/src/melted/libmelted.so*
+/src/mvcp/libmvcp.so*
+/src/tinyosc/libtinyosc.so*
+/src/mvcp-client/mvcp-client
+/src/mvcp-console/mvcp-console
+/src/modules/make.inc
+/build/
+/dist/
 *.log
 .vscode/
