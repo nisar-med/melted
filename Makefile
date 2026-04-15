@@ -1,6 +1,6 @@
 SUBDIRS = src/mvcp \
+		  src/tinyosc \
 		  src/melted \
-		  src/melted++ \
 		  src/mvcp-client \
 		  src/mvcp-console \
 		  src/modules

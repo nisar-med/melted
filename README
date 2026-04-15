@@ -44,8 +44,15 @@ Installation
 
 	The install is triggered by running:
 	
-	    make install 
-	
+	    sudo make install 
+		use sudo so that ldconfig runs without any issues
+
+Build Issues
+------------
+
+	If you encounter missing MLT header files or build errors related to 
+	MLT libraries, see BUILD_FIXES.md for solutions specific to modern 
+	MLT versions (7.x) and Ubuntu 22.04+.
 
 More Information
 ----------------

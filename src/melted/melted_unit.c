@@ -22,6 +22,7 @@
 #include <config.h>
 #endif
 
+#include <stdatomic.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -46,6 +47,38 @@
 /* Forward references */
 static void melted_unit_status_communicate( melted_unit );
 
+static void on_consumer_frame_render(mlt_properties owner, melted_unit self, mlt_event_data);
+
+/** \brief private members of mlt_consumer */
+
+/** A listener on the consumer-frame-show event
+ *
+ * Saves the position of the frame shown.
+ *
+ * \private \memberof mlt_consumer_s
+ * \param owner the events object
+ * \param consumer the consumer on which this event occurred
+ * \param frame the frame that was shown
+ */
+
+ static void on_consumer_frame_render(mlt_properties owner,
+	melted_unit unit,
+	mlt_event_data event_data)
+{
+	mlt_frame frame = mlt_event_data_to_frame(event_data);
+	if (frame) {
+		int position = mlt_frame_get_position(frame);
+		int index = mlt_properties_get_int( unit->properties, "unit" );
+
+		osc_client osc = unit->osc;
+		const char *ip = mlt_properties_get( unit->properties, "osc_ip" );
+		int port = mlt_properties_get_int( unit->properties, "osc_port" );
+		if ( !ip ) ip = DEFAULT_IP;
+		if ( !port ) port = DEFAULT_UDP_PORT;
+		osc_client_send_progress(osc, index, position, ip, port);
+	}
+}
+
 /** Allocate a new playout unit.
 
     \return A new melted_unit handle.
@@ -69,6 +102,7 @@ melted_unit melted_unit_init( int index, char *constructor )
 	if ( consumer != NULL )
 	{
 		mlt_playlist playlist = mlt_playlist_init( );
+		mlt_service_set_profile( MLT_PLAYLIST_SERVICE( playlist ), profile );
 		this = calloc( sizeof( melted_unit_t ), 1 );
 		this->properties = mlt_properties_new( );
 		mlt_properties_init( this->properties, this );
@@ -81,6 +115,13 @@ melted_unit melted_unit_init( int index, char *constructor )
 		mlt_properties_set_data( this->properties, "consumer", consumer, 0, ( mlt_destructor )mlt_consumer_close, NULL );
 		mlt_properties_set_data( this->properties, "playlist", playlist, 0, ( mlt_destructor )mlt_playlist_close, NULL );
 		mlt_consumer_connect( consumer, MLT_PLAYLIST_SERVICE( playlist ) );
+		this->osc = osc_client_init();
+		mlt_properties_set( this->properties, "osc_ip", DEFAULT_IP );
+		mlt_properties_set_int( this->properties, "osc_port", DEFAULT_UDP_PORT );
+		mlt_events_listen(MLT_CONSUMER_PROPERTIES(consumer),
+			this,
+			"consumer-frame-show",
+			(mlt_listener) on_consumer_frame_render);
 	}
 
 	return this;
@@ -756,6 +797,17 @@ int melted_unit_set( melted_unit unit, char *name_value )
 {
 	mlt_properties properties = NULL;
 
+	if ( strncmp( name_value, "osc_ip=", 7 ) == 0 )
+	{
+		mlt_properties_set( unit->properties, "osc_ip", name_value + 7 );
+		return 0;
+	}
+	else if ( strncmp( name_value, "osc_port=", 9 ) == 0 )
+	{
+		mlt_properties_set_int( unit->properties, "osc_port", atoi( name_value + 9 ) );
+		return 0;
+	}
+
 	if ( strncmp( name_value, "consumer.", 9 ) )
 	{
 		if ( strncmp( name_value, "producer.", 9 ) )
@@ -781,6 +833,8 @@ int melted_unit_set( melted_unit unit, char *name_value )
 
 char *melted_unit_get( melted_unit unit, char *name )
 {
+	if ( strcmp( name, "osc_ip" ) == 0 || strcmp( name, "osc_port" ) == 0 )
+		return mlt_properties_get( unit->properties, name );
 	mlt_playlist playlist = mlt_properties_get_data( unit->properties, "playlist", NULL );
 	mlt_properties properties = MLT_PLAYLIST_PROPERTIES( playlist );
 	return mlt_properties_get( properties, name );
@@ -799,6 +853,7 @@ void melted_unit_close( melted_unit unit )
 		melted_log( LOG_DEBUG, "closing unit..." );
 		melted_unit_terminate( unit );
 		mlt_properties_close( unit->properties );
+		osc_client_close( unit->osc );
 		free( unit );
 		melted_log( LOG_DEBUG, "... unit closed." );
 	}

@@ -1,42 +1,24 @@
 include ../../config.mak
 
 ifneq ($(targetos), Darwin)
-NAME = libmvcp$(LIBSUF)
+NAME = libtinyosc$(LIBSUF)
 TARGET = $(NAME).$(version)
 SONAME = $(NAME).$(soversion)
 SHFLAGS += -Wl,-soname,$(SONAME)
 else
-NAME = libmvcp$(LIBSUF)
-TARGET = libmvcp.$(version)$(LIBSUF)
-SONAME = libmvcp.$(soversion)$(LIBSUF)
+NAME = libtinyosc$(LIBSUF)
+TARGET = libtinyosc.$(version)$(LIBSUF)
+SONAME = libtinyosc.$(soversion)$(LIBSUF)
 SHFLAGS += -install_name $(libdir)/$(SONAME) -current_version $(version) -compatibility_version $(soversion)
 endif
 
-OBJS = mvcp.o \
-	   mvcp_notifier.o \
-	   mvcp_parser.o \
-	   mvcp_response.o \
-	   mvcp_status.o \
-	   mvcp_tokeniser.o \
-	   mvcp_util.o \
-	   mvcp_remote.o \
-	   mvcp_socket.o
+OBJS = tinyosc.o
 
-INCS = mvcp.h \
-	   mvcp_notifier.h \
-	   mvcp_parser.h \
-	   mvcp_remote.h \
-	   mvcp_response.h \
-	   mvcp_socket.h \
-	   mvcp_status.h \
-	   mvcp_tokeniser.h \
-	   mvcp_util.h
+INCS = tinyosc.h
 
 SRCS := $(OBJS:.o=.c)
 
 CFLAGS += -I.. $(RDYNAMIC)
-
-LDFLAGS += -L../framework -lpthread
 
 all: $(TARGET)
 

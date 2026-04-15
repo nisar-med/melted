@@ -9,6 +9,7 @@ CFLAGS += -I.. $(RDYNAMIC)
 LDFLAGS += -L../melted -lmelted
 LDFLAGS += -L../mvcp -lmvcp
 LDFLAGS += -lpthread
+LDFLAGS += -L../tinyosc -ltinyosc
 
 SRCS := $(OBJS:.o=.c)
 

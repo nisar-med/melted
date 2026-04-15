@@ -33,7 +33,7 @@ static int consumer_start( mlt_consumer this );
 /** This is what will be called by the factory
 */
 
-mlt_consumer consumer_mvcp_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg )
+mlt_consumer consumer_mvcp_init( mlt_profile profile, mlt_service_type type, const char *id, void *arg )
 {
 	// Create the consumer object
 	mlt_consumer this = calloc( sizeof( struct mlt_consumer_s ), 1 );

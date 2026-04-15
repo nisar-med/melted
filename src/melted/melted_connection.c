@@ -265,7 +265,11 @@ void *parser_thread( void *arg )
 						{
 							mlt_properties_set_data( MLT_SERVICE_PROPERTIES( service ), "melted_profile", profile,
 								0, (mlt_destructor) mlt_profile_close, NULL );
-							mlt_events_fire( owner, "push-received", &response, command, service, NULL );
+							
+							mlt_event_data event_data = {
+								.u.p = (void *[]){ &response, command, service, NULL }
+							};
+							mlt_events_fire( owner, "push-received", event_data );
 							if ( response == NULL )
 								response = mvcp_parser_push( parser, command, service );
 						}
@@ -289,7 +293,11 @@ void *parser_thread( void *arg )
 			else if ( strncmp( command, "STATUS", 6 ) )
 			{
 				// All other commands
-				mlt_events_fire( owner, "command-received", &response, command, NULL );
+				mlt_event_data event_data = {
+					.u.p = (void *[]){ &response, command, NULL }
+				};
+
+				mlt_events_fire( owner, "command-received", event_data );
 				if ( response == NULL )
 					response = mvcp_parser_execute( parser, command );
 				melted_log( LOG_INFO, "%s \"%s\" %d", address, command, mvcp_response_get_error_code( response ) );

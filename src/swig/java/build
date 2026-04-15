@@ -1,6 +1,11 @@
 #!/bin/sh
 
-path=`which java 2> /dev/null`
+path	# Invoke swig
+	mkdir -p src_swig/org/mltframework
+	swig -c++ -I../../melted++ `pkg-config mlt++-7 --cflags` -java -outdir src_swig/org/mltframework -package org.mltframework mlt.i || exit $?
+
+	# Compile the wrapper
+	g++ -D_GNU_SOURCE -c -rdynamic -pthread -I../../melted++ `pkg-config mlt++-7 --cflags` mlt_wrap.cxx $JAVA_INCLUDE || exit $?h java 2> /dev/null`
 
 if [ $? = 0 ]
 then
